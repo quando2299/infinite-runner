@@ -24,6 +24,7 @@ export class GameComponent implements OnInit, AfterViewInit {
           gravity: {
             y: 200,
           },
+          debug: true,
         },
       },
     };

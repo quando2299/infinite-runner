@@ -1,7 +1,7 @@
 import { GameObjects, Physics, Scene } from 'phaser';
-import AnimationKey from '../constants/AnimationKey';
 import SceneKey from '../constants/SceneKey';
 import TextureKey from '../constants/TextureKey';
+import RocketMouse from '../containers/RocketMouse';
 
 export class MainScene extends Scene {
   private background!: GameObjects.TileSprite;
@@ -67,15 +67,17 @@ export class MainScene extends Scene {
     this.bookcases = [this.bookcase1, this.bookcase2];
 
     // add rocket mouse
-    const mouse = this.physics.add
-      .sprite(
-        width * 0.5, // middle of the screen
-        height - 30, // middle of the screen
-        TextureKey.RocketMouse,
-        'rocketmouse_fly01.png'
-      )
-      .setOrigin(0.5, 0) // set 0.5 for setting mouse on the ground
-      .play(AnimationKey.RocketMouseRun);
+    // const mouse = this.physics.add
+    //   .sprite(
+    //     width * 0.5, // middle of the screen
+    //     height - 30, // middle of the screen
+    //     TextureKey.RocketMouse,
+    //     'rocketmouse_fly01.png'
+    //   )
+    //   .setOrigin(0.5, 0) // set 0.5 for setting mouse on the ground
+    //   .play(AnimationKey.RocketMouseRun);
+    const mouse = new RocketMouse(this, width * 0.5, height - 30);
+    this.add.existing(mouse);
 
     // Add physics to Rocket Mouse (Running and Scrolling)
     const body = mouse.body as Physics.Arcade.Body; // body can also be Physics.Arcade.StaticBody
