@@ -66,16 +66,6 @@ export class MainScene extends Scene {
       .setOrigin(0.5, 1);
     this.bookcases = [this.bookcase1, this.bookcase2];
 
-    // add rocket mouse
-    // const mouse = this.physics.add
-    //   .sprite(
-    //     width * 0.5, // middle of the screen
-    //     height - 30, // middle of the screen
-    //     TextureKey.RocketMouse,
-    //     'rocketmouse_fly01.png'
-    //   )
-    //   .setOrigin(0.5, 0) // set 0.5 for setting mouse on the ground
-    //   .play(AnimationKey.RocketMouseRun);
     const mouse = new RocketMouse(this, width * 0.5, height - 30);
     this.add.existing(mouse);
 

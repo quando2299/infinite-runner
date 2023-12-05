@@ -50,16 +50,14 @@ export class Preloader extends Scene {
   }
 
   create(): void {
-    this.scene.start(SceneKey.Game);
-
     // Create Animation for Rocket Mouse
     this.anims.create({
       key: AnimationKey.RocketMouseRun,
       frames: this.anims.generateFrameNames(TextureKey.RocketMouse, {
         start: 1,
         end: 4,
-        prefix: 'rocketmouse_run0',
-        zeroPad: 0, // It's not necessary but if the frame is more than 9 frames, it's necessary
+        prefix: 'rocketmouse_run',
+        zeroPad: 2,
         suffix: '.png',
       }),
       // you can create frame liek this
@@ -72,5 +70,42 @@ export class Preloader extends Scene {
       frameRate: 10,
       repeat: -1, // -1 to loop forever, it will loop as long as it's active
     });
+
+    // fall animations
+    this.anims.create({
+      key: AnimationKey.RocketMouseFall,
+      frames: [
+        {
+          key: TextureKey.RocketMouse,
+          frame: 'rocketmouse_fall01.png',
+        },
+      ],
+    });
+
+    // fall animations
+    this.anims.create({
+      key: AnimationKey.RocketMouseFly,
+      frames: [
+        {
+          key: TextureKey.RocketMouse,
+          frame: 'rocketmouse_fly01.png',
+        },
+      ],
+    });
+
+    // create flames animation
+    this.anims.create({
+      key: AnimationKey.RocketFlamesOn,
+      frames: this.anims.generateFrameNames(TextureKey.RocketMouse, {
+        start: 1,
+        end: 2,
+        prefix: 'flame',
+        suffix: '.png',
+      }),
+      frameRate: 10,
+      repeat: -1, // -1 to loop forever, it will loop as long as it's active
+    });
+
+    this.scene.start(SceneKey.Game);
   }
 }
