@@ -57,6 +57,12 @@ export class Preloader extends Scene {
       TextureKey.LaserMiddle,
       '../../assets/images/house/object_laser.png'
     );
+
+    // Load coins
+    this.load.image(
+      TextureKey.Coin,
+      '../../assets/images/house/object_coin.png'
+    );
   }
 
   create(): void {

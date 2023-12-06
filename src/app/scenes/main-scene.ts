@@ -20,6 +20,8 @@ export class MainScene extends Scene {
   private windows: GameObjects.Image[] = [];
   private bookcases: GameObjects.Image[] = [];
 
+  private coins!: Physics.Arcade.StaticGroup;
+
   laserObstacle!: LaserObstacle;
 
   constructor() {
@@ -72,6 +74,9 @@ export class MainScene extends Scene {
     // Add LaserObstacle Container to this Scene
     this.laserObstacle = new LaserObstacle(this, 900, 100);
     this.add.existing(this.laserObstacle);
+
+    this.coins = this.physics.add.staticGroup();
+    this.spawnCoins();
 
     // Add RocketMouse Container to this Scene
     const mouse = new RocketMouse(this, width * 0.5, height - 30);
@@ -220,6 +225,10 @@ export class MainScene extends Scene {
       body.position.x = this.laserObstacle.x + body.offset.x;
       body.position.y = this.laserObstacle.y;
     }
+  }
+
+  private spawnCoins(): void {
+    console.log('Spawn Coins');
   }
 
   private handleOverlapLaser(

@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { AUTO, Game, Types } from 'phaser';
 import { MainScene } from '../scenes/main-scene';
 import { Preloader } from '../scenes/preloader';
+import { GameOver } from '../scenes/game-over';
 
 @Component({
   selector: 'app-game',
@@ -17,7 +18,7 @@ export class GameComponent implements OnInit, AfterViewInit {
       type: AUTO,
       width: 800,
       height: 640,
-      scene: [Preloader, MainScene], // Add Preloader to first at list for Start first
+      scene: [Preloader, MainScene, GameOver], // Add Preloader to first at list for Start first
       physics: {
         default: 'arcade',
         arcade: {
