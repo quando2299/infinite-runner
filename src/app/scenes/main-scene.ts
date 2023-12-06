@@ -2,6 +2,7 @@ import { GameObjects, Physics, Scene } from 'phaser';
 import SceneKey from '../constants/SceneKey';
 import TextureKey from '../constants/TextureKey';
 import RocketMouse from '../containers/RocketMouse';
+import LaserObstacle from '../containers/LaserObstacle';
 
 export class MainScene extends Scene {
   private background!: GameObjects.TileSprite;
@@ -18,6 +19,8 @@ export class MainScene extends Scene {
   // Windows and Bookcases array for avoid overlapping each other
   private windows: GameObjects.Image[] = [];
   private bookcases: GameObjects.Image[] = [];
+
+  laserObstacle!: LaserObstacle;
 
   constructor() {
     super({ key: SceneKey.Game }); // Give the key to uniquely identify it with other Scenes
@@ -66,6 +69,11 @@ export class MainScene extends Scene {
       .setOrigin(0.5, 1);
     this.bookcases = [this.bookcase1, this.bookcase2];
 
+    // Add LaserObstacle Container to this Scene
+    this.laserObstacle = new LaserObstacle(this, 900, 100);
+    this.add.existing(this.laserObstacle);
+
+    // Add RocketMouse Container to this Scene
     const mouse = new RocketMouse(this, width * 0.5, height - 30);
     this.add.existing(mouse);
 
@@ -81,6 +89,14 @@ export class MainScene extends Scene {
     // follow rocket mouse by using Camera
     this.cameras.main.startFollow(mouse);
     this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30); // x, y, width and height are the same config with this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30);
+
+    this.physics.add.overlap(
+      this.laserObstacle,
+      mouse,
+      () => this.handleOverlapLaser(this.laserObstacle, mouse),
+      undefined,
+      this
+    );
   }
 
   override update(t: number, dt: number): void {
@@ -92,6 +108,9 @@ export class MainScene extends Scene {
 
     // update bookcase
     this.wrapBookcase();
+
+    // update laser
+    this.wrapLaserObstacle();
 
     // scroll the background
     this.background.setTilePosition(this.cameras.main.scrollX);
@@ -179,5 +198,34 @@ export class MainScene extends Scene {
 
       this.bookcase2.visible = !overlap;
     }
+  }
+
+  private wrapLaserObstacle(): void {
+    const scrollX = this.cameras.main.scrollX;
+    const rightEdge = scrollX + this.scale.width; // get distance from center to the end of right side
+
+    const body = this.laserObstacle.body as Phaser.Physics.Arcade.StaticBody;
+
+    const width = body.width;
+    if (this.laserObstacle.x + width < scrollX) {
+      this.laserObstacle.x = Phaser.Math.Between(
+        rightEdge + width,
+        rightEdge + width + 1000
+      );
+
+      this.laserObstacle.y = Phaser.Math.Between(0, 300);
+
+      // set the physics body's position
+      // add body.offset.x to account for x offset
+      body.position.x = this.laserObstacle.x + body.offset.x;
+      body.position.y = this.laserObstacle.y;
+    }
+  }
+
+  private handleOverlapLaser(
+    obj1: GameObjects.GameObject,
+    obj2: GameObjects.GameObject
+  ): void {
+    console.log('overlap!!');
   }
 }

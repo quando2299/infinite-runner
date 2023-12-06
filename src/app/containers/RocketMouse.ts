@@ -2,10 +2,18 @@ import { GameObjects, Types } from 'phaser';
 import AnimationKey from '../constants/AnimationKey';
 import TextureKey from '../constants/TextureKey';
 
+enum MouseState {
+  Running,
+  Killed,
+  Dead,
+}
+
 export default class RocketMouse extends Phaser.GameObjects.Container {
   private flames!: GameObjects.Sprite;
   private cursors!: Types.Input.Keyboard.CursorKeys;
   private rocketMouse!: GameObjects.Sprite;
+
+  private mouseState = MouseState.Running;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
@@ -40,26 +48,65 @@ export default class RocketMouse extends Phaser.GameObjects.Container {
   }
 
   preUpdate(): void {
+    // switch on this.mouseState
     const body = this.body as Phaser.Physics.Arcade.Body;
+    switch (this.mouseState) {
+      case MouseState.Running: {
+        if (this.cursors.space.isDown) {
+          body.setAccelerationY(-600);
+          this.enableJetpack(true);
 
-    if (this.cursors.space.isDown) {
-      body.setAccelerationY(-600);
-      this.enableJetpack(true);
+          // play the fly animation
+          // params true is If this fly animation is playing, ignore this call
+          this.rocketMouse.play(AnimationKey.RocketMouseFly, true);
+        } else {
+          body.setAccelerationY(0);
+          this.enableJetpack(false);
+        }
 
-      // play the fly animation
-      // params true is If this fly animation is playing, ignore this call
-      this.rocketMouse.play(AnimationKey.RocketMouseFly, true);
-    } else {
-      body.setAccelerationY(0);
-      this.enableJetpack(false);
+        // check if touching the ground
+        if (body.blocked.down) {
+          // play the run animation when touching the ground
+          this.rocketMouse.play(AnimationKey.RocketMouseRun, true);
+        } else if (body.velocity.y > 0) {
+          this.rocketMouse.play(AnimationKey.RocketMouseFall, true);
+        }
+
+        break;
+      }
+
+      case MouseState.Killed: {
+        // reduce velocity to 99%
+        body.velocity.x *= 0.99;
+
+        if (body.velocity.x <= 5) {
+          this.mouseState = MouseState.Dead;
+        }
+
+        break;
+      }
+
+      case MouseState.Dead: {
+        // Completely stop
+        body.setVelocity(0, 0);
+        break;
+      }
+    }
+  }
+
+  kill(): void {
+    // don't do anything if not in RUNNING state
+    if (this.mouseState !== MouseState.Running) {
+      return;
     }
 
-    // check if touching the ground
-    if (body.blocked.down) {
-      // play the run animation when touching the ground
-      this.rocketMouse.play(AnimationKey.RocketMouseRun, true);
-    } else if (body.velocity.y > 0) {
-      this.rocketMouse.play(AnimationKey.RocketMouseFall, true);
-    }
+    this.mouseState = MouseState.Killed;
+
+    this.rocketMouse.play(AnimationKey.RocketMouseDead);
+
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setAccelerationY(0);
+    body.setVelocity(1000, 0);
+    this.enableJetpack(false);
   }
 }

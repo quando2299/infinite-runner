@@ -47,6 +47,16 @@ export class Preloader extends Scene {
       TextureKey.Bookcase2,
       '../../assets/images/house/object_bookcase2.png'
     );
+
+    // load laser
+    this.load.image(
+      TextureKey.LaserEnd,
+      '../../assets/images/house/object_laser_end.png'
+    );
+    this.load.image(
+      TextureKey.LaserMiddle,
+      '../../assets/images/house/object_laser.png'
+    );
   }
 
   create(): void {
@@ -104,6 +114,19 @@ export class Preloader extends Scene {
       }),
       frameRate: 10,
       repeat: -1, // -1 to loop forever, it will loop as long as it's active
+    });
+
+    // create dead animation
+    this.anims.create({
+      key: AnimationKey.RocketMouseDead,
+      frames: this.anims.generateFrameNames(TextureKey.RocketMouse, {
+        start: 1,
+        end: 2,
+        prefix: 'rocketmouse_dead',
+        zeroPad: 2,
+        suffix: '.png',
+      }),
+      frameRate: 10,
     });
 
     this.scene.start(SceneKey.Game);

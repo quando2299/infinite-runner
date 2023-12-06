@@ -22,6 +22,7 @@ Use [TexturePacker] (https://www.codeandweb.com/texturepacker) for making Sprite
   - You can use `load.atlas()` for loading sprite sheets and alases
 - The core of Sprite and Image that Sprite can play animation and Image cannot !
 - Animations are global, once it created, it can be used in any Sprites of any Scences
+- If multiple image are connected (using `scene.add.image()` with `setOrigin()` (like top, middle and bottom part in LaserObstacle class)), you should use same value of all parts in `setOrigin()` (`setOrigin(0.5, 0)`)
 
 ## ToDo
 
