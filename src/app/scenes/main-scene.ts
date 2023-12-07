@@ -1,55 +1,51 @@
-import { GameObjects, Physics, Scene } from 'phaser';
+import { Scene } from 'phaser';
 import SceneKey from '../constants/SceneKey';
 import TextureKey from '../constants/TextureKey';
-import RocketMouse from '../containers/RocketMouse';
 import LaserObstacle from '../containers/LaserObstacle';
+import RocketMouse from '../containers/RocketMouse';
 
 export class MainScene extends Scene {
-  private background!: GameObjects.TileSprite;
-  private mouseHole!: GameObjects.Image;
+  private background!: Phaser.GameObjects.TileSprite;
+  private mouseHole!: Phaser.GameObjects.Image;
+  private window1!: Phaser.GameObjects.Image;
+  private window2!: Phaser.GameObjects.Image;
+  private bookcase1!: Phaser.GameObjects.Image;
+  private bookcase2!: Phaser.GameObjects.Image;
 
-  // Windows
-  private window1!: GameObjects.Image;
-  private window2!: GameObjects.Image;
+  private bookcases: Phaser.GameObjects.Image[] = [];
+  private windows: Phaser.GameObjects.Image[] = [];
 
-  // Bookcases
-  private bookcase1!: GameObjects.Image;
-  private bookcase2!: GameObjects.Image;
+  private laserObstacle!: LaserObstacle;
+  private coins!: Phaser.Physics.Arcade.StaticGroup;
 
-  // Windows and Bookcases array for avoid overlapping each other
-  private windows: GameObjects.Image[] = [];
-  private bookcases: GameObjects.Image[] = [];
+  private scoreLabel!: Phaser.GameObjects.Text;
+  private score = 0;
 
-  private coins!: Physics.Arcade.StaticGroup;
-
-  laserObstacle!: LaserObstacle;
+  private mouse!: RocketMouse;
 
   constructor() {
-    super({ key: SceneKey.Game }); // Give the key to uniquely identify it with other Scenes
+    super(SceneKey.Game);
   }
 
-  // preload use for loading assets
-  preload(): void {}
+  init() {
+    this.score = 0;
+  }
 
-  create(): void {
-    // score width and height of game screen
+  create() {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // add background image to Scene
     this.background = this.add
       .tileSprite(0, 0, width, height, TextureKey.Background)
-      .setOrigin(0, 0)
-      .setScrollFactor(0, 0);
+      .setOrigin(0)
+      .setScrollFactor(0);
 
-    // create random mouse hole each time game start
     this.mouseHole = this.add.image(
       Phaser.Math.Between(900, 1500),
       501,
       TextureKey.MouseHole
     );
 
-    // Add window to Scene
     this.window1 = this.add.image(
       Phaser.Math.Between(900, 1300),
       200,
@@ -60,154 +56,185 @@ export class MainScene extends Scene {
       200,
       TextureKey.Window2
     );
+
     this.windows = [this.window1, this.window2];
 
-    // Add Bookcase to Scene
     this.bookcase1 = this.add
-      .image(Phaser.Math.Between(2200, 2700), 200, TextureKey.Bookcase1)
+      .image(Phaser.Math.Between(2200, 2700), 580, TextureKey.Bookcase1)
       .setOrigin(0.5, 1);
+
     this.bookcase2 = this.add
-      .image(Phaser.Math.Between(2900, 3400), 200, TextureKey.Bookcase2)
+      .image(Phaser.Math.Between(2900, 3400), 580, TextureKey.Bookcase2)
       .setOrigin(0.5, 1);
+
     this.bookcases = [this.bookcase1, this.bookcase2];
 
-    // Add LaserObstacle Container to this Scene
     this.laserObstacle = new LaserObstacle(this, 900, 100);
     this.add.existing(this.laserObstacle);
 
     this.coins = this.physics.add.staticGroup();
     this.spawnCoins();
 
-    // Add RocketMouse Container to this Scene
-    const mouse = new RocketMouse(this, width * 0.5, height - 30);
-    this.add.existing(mouse);
+    this.mouse = new RocketMouse(this, width * 0.5, height - 30);
+    this.add.existing(this.mouse);
 
-    // Add physics to Rocket Mouse (Running and Scrolling)
-    const body = mouse.body as Physics.Arcade.Body; // body can also be Physics.Arcade.StaticBody
-    body.setCollideWorldBounds(true); // Sets whether this Body collides with the world boundary.
-    body.setVelocityX(200); // The velocity in horizontal, in pixels per second.
+    const body = this.mouse.body as Phaser.Physics.Arcade.Body;
+    body.setCollideWorldBounds(true);
+    body.setVelocityX(200);
 
-    // Use Number.MAX_SAFE_INTEGER because of this is the infinite runner game
-    // set physics world bounds...
-    this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30);
+    this.scoreLabel = this.add
+      .text(10, 10, `Score: ${this.score}`, {
+        fontSize: '24px',
+        color: '#080808',
+        backgroundColor: '#F8E71C',
+        shadow: { fill: true, blur: 0, offsetY: 0 },
+        padding: { left: 15, right: 15, top: 10, bottom: 10 },
+      })
+      .setScrollFactor(0);
 
-    // follow rocket mouse by using Camera
-    this.cameras.main.startFollow(mouse);
-    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30); // x, y, width and height are the same config with this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30);
+    this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 55);
+
+    this.cameras.main.startFollow(this.mouse);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height);
 
     this.physics.add.overlap(
       this.laserObstacle,
-      mouse,
-      () => this.handleOverlapLaser(this.laserObstacle, mouse),
+      this.mouse,
+      (obj1, obj2) => {
+        // Use type assertions here
+        const gameObject1 = obj1 as Phaser.GameObjects.GameObject;
+        const gameObject2 = obj2 as Phaser.GameObjects.GameObject;
+
+        this.handleOverlapLaser(gameObject1, gameObject2);
+      },
+      undefined,
+      this
+    );
+
+    this.physics.add.overlap(
+      this.coins,
+      this.mouse,
+      (obj1, obj2) => {
+        // Use type assertions here
+        const gameObject1 = obj1 as Phaser.GameObjects.GameObject;
+        const gameObject2 = obj2 as Phaser.GameObjects.GameObject;
+
+        this.handleCollectCoin(gameObject1, gameObject2);
+      },
       undefined,
       this
     );
   }
 
-  override update(t: number, dt: number): void {
-    // update mouse hole
+  private handleCollectCoin(
+    obj1: Phaser.GameObjects.GameObject,
+    obj2: Phaser.GameObjects.GameObject
+  ) {
+    const coin = obj2 as Phaser.Physics.Arcade.Sprite;
+    this.coins.killAndHide(coin);
+    coin.body!.enable = false;
+
+    ++this.score;
+    this.scoreLabel.text = `Score: ${this.score}`;
+  }
+
+  private handleOverlapLaser(
+    obj1: Phaser.GameObjects.GameObject,
+    obj2: Phaser.GameObjects.GameObject
+  ) {
+    // const laser = obj1 as LaserObstacle
+    const mouse = obj2 as RocketMouse;
+
+    mouse.kill();
+  }
+
+  override update(t: number, dt: number) {
     this.wrapMouseHole();
+    this.wrapWindows();
+    this.wrapBookcases();
+    this.wrapLaserObtacle();
 
-    // update window
-    this.wrapWindow();
-
-    // update bookcase
-    this.wrapBookcase();
-
-    // update laser
-    this.wrapLaserObstacle();
-
-    // scroll the background
     this.background.setTilePosition(this.cameras.main.scrollX);
+
+    this.teleportBackwards();
   }
 
-  // Determine if mouse hole scrolls off left-side it will create new hole
-  private wrapMouseHole(): void {
+  private teleportBackwards() {
     const scrollX = this.cameras.main.scrollX;
-    const rightEdge = scrollX + this.scale.width; // get distance from center to the end of right side
+    const maxX = 2380;
 
-    if (this.mouseHole.x + this.mouseHole.width < scrollX) {
-      this.mouseHole.x = Phaser.Math.Between(rightEdge + 100, rightEdge + 1000);
-    }
-  }
+    if (scrollX > maxX) {
+      this.mouse.x -= maxX;
+      this.mouseHole.x -= maxX;
 
-  private wrapWindow(): void {
-    const scrollX = this.cameras.main.scrollX;
-    const rightEdge = scrollX + this.scale.width; // get distance from center to the end of right side
-
-    let windowWidth = this.window1.width * 2;
-    if (this.window1.x + windowWidth < scrollX) {
-      // pick new random position
-      this.window1.x = Phaser.Math.Between(
-        rightEdge + windowWidth,
-        rightEdge + windowWidth + 800
-      );
-
-      // use find() to look for a bookcase that overlaps
-      // with the new window1 position
-      const overlap = this.bookcases.find((bc) => {
-        return Math.abs(this.window1.x - bc.x) <= this.window1.width;
+      this.windows.forEach((win) => {
+        win.x -= maxX;
       });
 
-      this.window1.visible = !overlap;
-    }
-
-    windowWidth = this.window2.width;
-    if (this.window2.x + windowWidth < scrollX) {
-      // pick new random position
-      this.window2.x = Phaser.Math.Between(
-        this.window1.x + windowWidth,
-        this.window1.x + windowWidth + 800
-      );
-
-      // do the same as we did above for window2
-      const overlap = this.bookcases.find((bc) => {
-        return Math.abs(this.window2.x - bc.x) <= this.window2.width;
+      this.bookcases.forEach((bc) => {
+        bc.x -= maxX;
       });
 
-      this.window2.visible = !overlap;
+      this.laserObstacle.x -= maxX;
+      const laserBody = this.laserObstacle
+        .body as Phaser.Physics.Arcade.StaticBody;
+      laserBody.x -= maxX;
+
+      this.spawnCoins();
+
+      this.coins.children.each((child) => {
+        const coin = child as Phaser.Physics.Arcade.Sprite;
+        if (!coin.active) {
+          return false;
+        }
+
+        coin.x -= maxX;
+        const body = coin.body as Phaser.Physics.Arcade.StaticBody;
+        body.updateFromGameObject();
+
+        return true;
+      });
     }
   }
 
-  private wrapBookcase(): void {
+  private spawnCoins() {
+    this.coins.children.each((child) => {
+      const coin = child as Phaser.Physics.Arcade.Sprite;
+      this.coins.killAndHide(coin);
+      coin.body!.enable = false;
+
+      return true;
+    });
+
     const scrollX = this.cameras.main.scrollX;
-    const rightEdge = scrollX + this.scale.width; // get distance from center to the end of right side
+    const rightEdge = scrollX + this.scale.width;
 
-    let bookcaseWidth = this.bookcase1.width * 2;
-    if (this.bookcase1.x + bookcaseWidth < scrollX) {
-      // pick new random position
-      this.bookcase1.x = Phaser.Math.Between(
-        rightEdge + bookcaseWidth,
-        rightEdge + bookcaseWidth + 800
-      );
+    let x = rightEdge + 100;
 
-      // use find() to look for a window that overlaps
-      // with the new bookcase 1 position
-      const overlap = this.windows.find((win) => {
-        return Math.abs(this.bookcase1.x - win.x) <= win.width;
-      });
+    const numCoins = Phaser.Math.Between(1, 20);
 
-      this.bookcase1.visible = !overlap;
-    }
+    for (let i = 0; i < numCoins; ++i) {
+      const coin = this.coins.get(
+        x,
+        Phaser.Math.Between(100, this.scale.height - 100),
+        TextureKey.Coin
+      ) as Phaser.Physics.Arcade.Sprite;
+      coin.setVisible(true);
+      coin.setActive(true);
 
-    bookcaseWidth = this.bookcase2.width;
-    if (this.bookcase2.x + bookcaseWidth < scrollX) {
-      this.bookcase2.x = Phaser.Math.Between(
-        this.bookcase1.x + bookcaseWidth,
-        this.bookcase1.x + bookcaseWidth + 800
-      );
-      // do the same as we did above for bookcase2
-      const overlap = this.windows.find((win) => {
-        return Math.abs(this.bookcase2.x - win.x) <= win.width;
-      });
+      const body = coin.body as Phaser.Physics.Arcade.StaticBody;
+      body.setCircle(body.width * 0.5);
+      body.enable = true;
 
-      this.bookcase2.visible = !overlap;
+      body.updateFromGameObject();
+
+      x += coin.width * 1.5;
     }
   }
 
-  private wrapLaserObstacle(): void {
+  private wrapLaserObtacle() {
     const scrollX = this.cameras.main.scrollX;
-    const rightEdge = scrollX + this.scale.width; // get distance from center to the end of right side
+    const rightEdge = scrollX + this.scale.width;
 
     const body = this.laserObstacle.body as Phaser.Physics.Arcade.StaticBody;
 
@@ -217,24 +244,83 @@ export class MainScene extends Scene {
         rightEdge + width,
         rightEdge + width + 1000
       );
-
       this.laserObstacle.y = Phaser.Math.Between(0, 300);
 
-      // set the physics body's position
-      // add body.offset.x to account for x offset
       body.position.x = this.laserObstacle.x + body.offset.x;
       body.position.y = this.laserObstacle.y;
     }
   }
 
-  private spawnCoins(): void {
-    console.log('Spawn Coins');
+  private wrapBookcases() {
+    const scrollX = this.cameras.main.scrollX;
+    const rightEdge = scrollX + this.scale.width;
+
+    let width = this.bookcase1.width * 2;
+    if (this.bookcase1.x + width < scrollX) {
+      this.bookcase1.x = Phaser.Math.Between(
+        rightEdge + width,
+        rightEdge + width + 800
+      );
+      const overlap = this.windows.find((win) => {
+        return Math.abs(this.bookcase1.x - win.x) <= win.width;
+      });
+
+      this.bookcase1.visible = !overlap;
+    }
+
+    width = this.bookcase2.width;
+    if (this.bookcase2.x + width < scrollX) {
+      this.bookcase2.x = Phaser.Math.Between(
+        this.bookcase1.x + width,
+        this.bookcase1.x + width + 800
+      );
+      const overlap = this.windows.find((win) => {
+        return Math.abs(this.bookcase2.x - win.x) <= win.width;
+      });
+
+      this.bookcase2.visible = !overlap;
+
+      // this.spawnCoins()
+    }
   }
 
-  private handleOverlapLaser(
-    obj1: GameObjects.GameObject,
-    obj2: GameObjects.GameObject
-  ): void {
-    console.log('overlap!!');
+  private wrapWindows() {
+    const scrollX = this.cameras.main.scrollX;
+    const rightEdge = scrollX + this.scale.width;
+
+    let width = this.window1.width * 2;
+    if (this.window1.x + width < scrollX) {
+      this.window1.x = Phaser.Math.Between(
+        rightEdge + width,
+        rightEdge + width + 800
+      );
+      const overlap = this.bookcases.find((bc) => {
+        return Math.abs(this.window1.x - bc.x) <= this.window1.width;
+      });
+
+      this.window1.visible = !overlap;
+    }
+
+    width = this.window2.width;
+    if (this.window2.x + width < scrollX) {
+      this.window2.x = Phaser.Math.Between(
+        this.window1.x + width,
+        this.window1.x + width + 800
+      );
+      const overlap = this.bookcases.find((bc) => {
+        return Math.abs(this.window2.x - bc.x) <= this.window2.width;
+      });
+
+      this.window2.visible = !overlap;
+    }
+  }
+
+  private wrapMouseHole() {
+    const scrollX = this.cameras.main.scrollX;
+    const rightEdge = scrollX + this.scale.width;
+
+    if (this.mouseHole.x + this.mouseHole.width < scrollX) {
+      this.mouseHole.x = Phaser.Math.Between(rightEdge + 100, rightEdge + 1000);
+    }
   }
 }

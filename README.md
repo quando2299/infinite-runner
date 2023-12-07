@@ -14,8 +14,9 @@ Run `ng s -o` for a dev server and it will automatically open your browser. The 
   - [House](https://www.gameartguppy.com/shop/house-1-repeatable-background/)
   - [Custom Rocket Mouse fly](https://github.com/ourcade/infinite-runner-template-phaser3/issues/1) --> Save this with name `rocketmouse_fly01.png`
 
-- Use [TexturePacker] (https://www.codeandweb.com/texturepacker) for making Sprite Sheets or Atlases
+- Use [TexturePacker](https://www.codeandweb.com/texturepacker) for making Sprite Sheets or Atlases
 - [Text Styler for Phaser 3 Tool](https://ourcade.co/tools/phaser3-text-styler/)
+- [TiledMap Tiled Parser](https://ourcade.co/tools/phaser3-tiled-parser/)
 
 ## Notes
 

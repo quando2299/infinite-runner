@@ -13,7 +13,7 @@ export default class LaserObstacle extends GameObjects.Container {
       .setOrigin(0.5, 0);
 
     // set height of middle to 200px
-    middle.setDisplaySize(middle.width, 200);
+    middle.setDisplaySize(middle.width, 100);
 
     const bottom = scene.add
       .image(0, middle.y + middle.displayHeight, TextureKey.LaserEnd)
